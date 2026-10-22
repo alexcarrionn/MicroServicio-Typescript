@@ -2,8 +2,8 @@ name: Pages
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:   # permite lanzarlo a mano desde la pestaña Actions
+    branches: [main]
+  workflow_dispatch: # permite lanzarlo a mano desde la pestaña Actions
 
 # solo una publicación a la vez; no se cancela la que está en curso
 concurrency:
@@ -11,9 +11,9 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read   # leer el código (checkout)
-  pages: write     # publicar en GitHub Pages
-  id-token: write  # deploy-pages verifica la identidad del workflow con OIDC
+  contents: read # leer el código (checkout)
+  pages: write # publicar en GitHub Pages
+  id-token: write # deploy-pages verifica la identidad del workflow con OIDC
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "22", cache: npm }
+        with: { node-version: '22', cache: npm }
       - name: Instalar dependencias
         run: npm ci
       - name: Generar la web

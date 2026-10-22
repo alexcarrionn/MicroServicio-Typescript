@@ -1,0 +1,16 @@
+#!/bin/sh
+# Formatea con Prettier y corrige con ESLint los ficheros en staging antes de cada commit
+
+files=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$files" ] && exit 0
+
+echo "Formateando con Prettier..."
+echo "$files" | xargs npx prettier --write --ignore-unknown || exit 1
+
+lintable=$(echo "$files" | grep -E '\.(ts|js)$')
+if [ -n "$lintable" ]; then
+  echo "Comprobando con ESLint..."
+  echo "$lintable" | xargs npx eslint --fix || exit 1
+fi
+
+echo "$files" | xargs git add
