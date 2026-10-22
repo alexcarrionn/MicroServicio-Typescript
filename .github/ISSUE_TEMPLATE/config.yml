@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Dudas generales
+    url: https://github.com/alexcarrionn/MicroServicio-Typescript/discussions
+    about: Para preguntas, usa Discussions
