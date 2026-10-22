@@ -87,9 +87,11 @@ El uso de herramientas de asistencia basada en IA (ChatGPT, GitHub Copilot, Gemi
 
 Antes de empezar cualquier tarea de cierto alcance, abre o busca una Issue. Al crear una nueva, usa las plantillas disponibles en `.github/ISSUE_TEMPLATE/`:
 
-* **Bug report** — para fallos de funcionamiento o regresiones.
-* **Enhancement** — para nuevas características o mejoras técnicas.
+* **Informe de bug** — para fallos de funcionamiento o regresiones.
+* **Petición de funcionalidad** — para nuevas características o mejoras.
 * **Nuevo algoritmo** — plantilla específica para implementar uno de los algoritmos pendientes.
+* **Tarea técnica** — refactorizaciones, dependencias, CI/CD o Docker.
+* **Documentación** — errores o huecos en la documentación.
 
 Si vienes de otro equipo, **comenta en el issue antes de ponerte**, para que no lo cojan dos personas a la vez. Te lo asignamos y es tuyo.
 
