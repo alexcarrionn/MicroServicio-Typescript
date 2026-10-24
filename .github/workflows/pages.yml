@@ -1,0 +1,45 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # permite lanzarlo a mano desde la pestaña Actions
+
+# solo una publicación a la vez; no se cancela la que está en curso
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read # leer el código (checkout)
+  pages: write # publicar en GitHub Pages
+  id-token: write # deploy-pages verifica la identidad del workflow con OIDC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm }
+      - name: Instalar dependencias
+        run: npm ci
+      - name: Generar la web
+        run: npm run docs
+      - name: Subir la web como artefacto de Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -18,7 +18,7 @@ assignees: ["alexcarrionn"]
 ## Comportamiento actual
 <!-- Petición curl, código HTTP y JSON de error devuelto. -->
 ```shell
-curl -i -X POST http://localhost:8080/api/tasks -H "Content-Type: application/json" -d '{...}'
+curl -i -X POST http://localhost:3000/api/v1/benchmark -H "Content-Type: application/json" -d '{"algorithm":"mergesort","size":10000}'
 
 HTTP/1.1 500
 {"status": 500, "error": "..."}
@@ -31,5 +31,6 @@ HTTP/1.1 500
 ```
 
 ## Entorno
-- Versión de Java (`java -version`):
-- Versión o commit de tasky (`git rev-parse --short HEAD`):
+- Versión de Node.js (`node -v`):
+- Ejecución: [ ] `npm run dev`  [ ] Docker Compose  [ ] Imagen de GHCR (indica la etiqueta)
+- Versión o commit del microservicio (`git rev-parse --short HEAD`):
