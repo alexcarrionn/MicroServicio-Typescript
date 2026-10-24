@@ -13,6 +13,19 @@ permissions:
   contents: read # leer el código (checkout)
 
 jobs:
+  validate-pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+      repository-projects: write
+    steps:
+      - name: PR Conventional Commit Validation
+        uses: ytanikin/pr-conventional-commits@1.4.0
+        with:
+          task_types: '["feat","fix","docs","test","ci","build","refactor","perf","style","chore","revert"]'
+
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
