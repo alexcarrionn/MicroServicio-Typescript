@@ -1,6 +1,6 @@
 name: Resumen con IA
 
-# En cada pull request, una IA de GitHub Models resume en lenguaje natural
+# En cada pull request, una IA de Groq resume en lenguaje natural
 # qué cambia y lo publica como comentario en el PR.
 on:
   pull_request:
@@ -13,10 +13,9 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write # para comentar en el PR
-  models: read # para llamar a GitHub Models con el GITHUB_TOKEN
 
 env:
-  AI_MODEL: openai/gpt-4o-mini
+  AI_MODEL: openai/gpt-oss-120b
 
 jobs:
   resumen:
@@ -31,13 +30,15 @@ jobs:
 
       - name: Pedir el resumen a la IA
         env:
-          # GitHub Models usa el token del propio workflow, sin secretos extra
-          GH_TOKEN: ${{ github.token }}
+          # el token vive en un secreto del repositorio, nunca en el código
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -uo pipefail
           fallo() { echo "::warning::$1"; echo "La IA ha fallado" > resumen.md; exit 0; }
+
+          [ -n "$GROQ_API_KEY" ] || fallo "No está definido el secreto GROQ_API_KEY"
 
           # el diff se recorta para no superar el contexto del modelo
           git diff --stat "$BASE_SHA" "$HEAD_SHA" > cambios.txt
@@ -54,11 +55,11 @@ jobs:
             ]
           }' > peticion.json
 
-          curl -sS --fail --max-time 300 https://models.github.ai/inference/chat/completions \
-            -H "Authorization: Bearer $GH_TOKEN" \
+          curl -sS --fail --max-time 300 https://api.groq.com/openai/v1/chat/completions \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d @peticion.json -o respuesta.json \
-            || fallo "La llamada a GitHub Models ha fallado"
+            || fallo "La llamada a Groq ha fallado"
 
           jq -er '.choices[0].message.content | select(length > 0)' respuesta.json > texto.md \
             || fallo "La respuesta de la IA no tiene contenido"
