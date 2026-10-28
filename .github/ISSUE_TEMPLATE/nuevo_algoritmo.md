@@ -5,25 +5,33 @@ title: "[ALGO] "
 labels: ["enhancement", "good first issue"]
 ---
 
-## Algoritmo
-<!-- Nombre canónico en minúsculas: es el valor que aceptará el campo "algorithm". Ej.: quicksort -->
+## Algoritmo y comportamiento esperado
 
-## Qué significa `size`
-<!-- Ej.: número de elementos del Int32Array que se ordena. -->
+<!-- Nombre canónico en minúsculas y resultado que debe producir. Añade los casos límite o restricciones relevantes. -->
 
-## Complejidad esperada
-- Temporal:
-- Espacial:
-<!-- Ej.: O(n log n) en promedio, O(log n) de pila; ordenación in situ. -->
+## Contrato de entrada
 
-## Variante o detalles de implementación
-<!-- Ej.: partición de Lomuto, pivote aleatorio... Opcional. -->
+- **Qué significa `size`:**
+- **Tipo y distribución de entrada:**
+- **Resultado esperado y modificación de la entrada:**
+- **Restricciones o casos límite:**
+
+<!-- Para ordenar, indica si debe usarse el Int32Array aleatorio común. Para otros algoritmos, especifica el generador y la forma de la entrada. -->
+
+## Complejidad y variante esperadas
+
+- **Tiempo (mejor / medio / peor, si aplica):**
+- **Memoria adicional:**
+- **Variante o decisiones requeridas:**
 
 ## Criterios de aceptación
-- [ ] `src/algorithms/<nombre>.ts` implementa la interfaz `Algorithm` y usa `randomInt32Array` para generar la entrada.
-- [ ] Ordena in situ, sin crear arrays nuevos en cada paso.
-- [ ] Registrado en `src/algorithms/registry.ts` y visible en `GET /api/v1/algorithms`.
-- [ ] Tests en `tests/unit/<nombre>.test.ts`: vacío, un elemento, ordenado, inverso, repetidos y aleatorio grande contra `Array.prototype.sort`.
-- [ ] El PR incluye la salida de `curl` para dos o tres tamaños distintos.
 
-> Antes de empezar, comenta en este issue para que te lo asignemos. Los pasos están en la sección 6 de [CONTRIBUTING.md](https://github.com/alexcarrionn/MicroServicio-Typescript/blob/main/.github/CONTRIBUTING.md#6-cómo-añadir-un-algoritmo).
+- [ ] `src/algorithms/<nombre>.ts` implementa `Algorithm<TInput>` con el nombre canónico indicado.
+- [ ] `generateInput(size)` genera una entrada conforme a este issue; la generación queda fuera del cronómetro.
+- [ ] Se registra en `src/algorithms/registry.ts` y aparece en `GET /api/v1/algorithms`.
+- [ ] Hay tests en `tests/unit/<nombre>.test.ts` para el comportamiento, casos límite y tamaño de entrada definidos aquí.
+- [ ] Se crea `docs/<nombre>.md` siguiendo la [plantilla de documentación de algoritmos](https://github.com/alexcarrionn/MicroServicio-Typescript/blob/main/docs/plantilla-algoritmo.md).
+- [ ] Se comprueba el benchmark con dos o tres tamaños y se incluyen las salidas en el PR.
+- [ ] No se modifica el contrato común de la API.
+
+> Antes de empezar, comenta en este issue y espera a que te lo asignemos. Documenta la implementación con la plantilla enlazada y sigue la [guía para añadir algoritmos](https://github.com/alexcarrionn/MicroServicio-Typescript/blob/main/.github/CONTRIBUTING.md#6-cómo-añadir-un-algoritmo).

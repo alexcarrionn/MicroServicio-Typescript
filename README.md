@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/alexcarrionn/MicroServicio-Typescript/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alexcarrionn/MicroServicio-Typescript/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/alexcarrionn/MicroServicio-Typescript/graph/badge.svg)](https://codecov.io/gh/alexcarrionn/MicroServicio-Typescript)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=TypeScript&logoColor=FFF)
+![Node.js 22](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
 
 Microservicio REST en **TypeScript** (Node.js 22, Fastify, Zod) que mide el tiempo de ejecución de algoritmos. Forma parte del proyecto global de comparación de rendimiento de algoritmos de la asignatura **Prácticas Continuas** del Máster en Ingeniería del Software de la Universidad de Murcia: cada grupo implementa la misma API en un lenguaje distinto y un frontend común las consulta para comparar los tiempos.
 
@@ -148,9 +150,24 @@ git push origin v1.0.0
 
 ## Estructura del proyecto
 
-
 ```
-
+.
+├── .github/
+│   ├── ISSUE_TEMPLATE/        # plantillas de issues
+│   ├── workflows/             # CI, publicación y GitHub Pages
+│   ├── CONTRIBUTING.md
+│   └── PULL_REQUEST_TEMPLATE.md
+├── docs/
+│   ├── mergesort.md          # documentación del algoritmo de referencia
+│   └── plantilla-algoritmo.md
+├── src/
+│   ├── algorithms/           # algoritmos y registro
+│   ├── api/                  # rutas y validación HTTP
+│   └── benchmark/            # entradas, medición y workers
+├── tests/
+│   ├── unit/
+│   └── integration/
+└── .githooks/                # hooks locales versionados
 ```
 
 ## Contribuir
@@ -158,6 +175,8 @@ git push origin v1.0.0
 Las contribuciones entran siempre por Pull Request: la rama `main` está protegida, cada PR necesita la aprobación de un miembro del equipo y que pase la CI.
 
 Si vienes de otro equipo para implementar un algoritmo, busca un issue con la etiqueta `good first issue` y sigue la guía de [CONTRIBUTING.md](.github/CONTRIBUTING.md#6-cómo-añadir-un-algoritmo).
+
+Cada algoritmo nuevo debe incluir su documentación en `docs/<nombre>.md`, creada a partir de la [plantilla de documentación](docs/plantilla-algoritmo.md). Espera a que te asignen el issue antes de empezar.
 
 Los commits siguen [Conventional Commits](https://www.conventionalcommits.org/es/): `tipo(ámbito): descripción en imperativo`.
 
