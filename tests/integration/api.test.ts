@@ -60,6 +60,7 @@ describe("POST /api/v1/benchmark", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Bad Request");
+    expect(response.body.message).toBe("Bad Request");
     expect(response.body.details).toContainEqual(
       expect.objectContaining({ path: "size" }),
     );
@@ -95,6 +96,7 @@ describe("POST /api/v1/benchmark", () => {
 
     expect(response.status).toBe(400);
     expect(response.type).toBe("application/json");
-    expect(response.body).toHaveProperty("message");
+    expect(response.body.error).toBe("Bad Request");
+    expect(response.body.message).toBe("Bad Request");
   });
 });
