@@ -4,6 +4,10 @@ import { buildApp } from "../../src/api/app.js";
 
 const app = buildApp();
 
+app.get("/test/internal-error", async () => {
+  throw new Error("detalle confidencial");
+});
+
 beforeAll(async () => {
   await app.ready();
 });
@@ -18,6 +22,19 @@ describe("GET /health", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ status: "UP" });
+  });
+});
+
+describe("errores internos", () => {
+  it("no expone el mensaje original del error", async () => {
+    const response = await request(app.server).get("/test/internal-error");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({
+      error: "Internal Server Error",
+      message: "Internal Server Error",
+    });
+    expect(JSON.stringify(response.body)).not.toContain("detalle confidencial");
   });
 });
 
