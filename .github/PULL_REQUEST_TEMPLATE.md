@@ -4,6 +4,11 @@
 
 Closes #
 
+## Documentación
+
+- [ ] He actualizado la documentación pertinente.
+- [ ] Si añado un algoritmo, he creado `docs/<nombre>.md` a partir de `docs/plantilla-algoritmo.md`.
+
 ## Cómo lo he probado
 
 - [ ] Tests unitarios nuevos o actualizados
