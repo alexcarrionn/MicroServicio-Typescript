@@ -207,17 +207,19 @@ Busca uno con la etiqueta `good first issue` o `help wanted`, comenta que lo cog
 Crea `src/algorithms/<nombre>.ts`. La interfaz común está en `src/algorithms/types.ts`:
 
 ```ts
-export interface Algorithm {
+export interface Algorithm<TInput = unknown> {
   /** Nombre canónico, en minúsculas. Es el valor que acepta el campo "algorithm". */
   readonly name: string;
 
   /** Genera una entrada de tamaño `size`. Se ejecuta FUERA del cronómetro. */
-  generateInput(size: number): AlgorithmInput;
+  generateInput(size: number): TInput;
 
   /** Ejecuta el algoritmo. Es lo único que se mide. */
-  run(input: AlgorithmInput): void;
+  run(input: TInput): void;
 }
 ```
+
+`TInput` es el tipo de la entrada de tu algoritmo: `Int32Array` para los de ordenación, un número para Fibonacci, un par de matrices para la multiplicación, etc. Lo indicas al declararlo y no hace falta tocar `types.ts`.
 
 Ejemplo, tomando `mergesort.ts` como referencia:
 
@@ -225,7 +227,7 @@ Ejemplo, tomando `mergesort.ts` como referencia:
 import type { Algorithm } from './types.js';
 import { randomInt32Array } from '../benchmark/input.js';
 
-export const quicksort: Algorithm = {
+export const quicksort: Algorithm<Int32Array> = {
   name: 'quicksort',
 
   generateInput(size: number) {
@@ -233,7 +235,7 @@ export const quicksort: Algorithm = {
   },
 
   run(input) {
-    sort(input as Int32Array, 0, input.length - 1);
+    sort(input, 0, input.length - 1);
   },
 };
 
