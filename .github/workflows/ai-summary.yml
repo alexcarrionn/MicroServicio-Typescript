@@ -1,0 +1,78 @@
+name: Resumen con IA
+
+# En cada pull request, una IA de Ollama Cloud resume en lenguaje natural
+# qué cambia y lo publica como comentario en el PR.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: ai-summary-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write # para comentar en el PR
+
+env:
+  OLLAMA_MODEL: gpt-oss:120b
+
+jobs:
+  resumen:
+    # los PRs desde forks (otros grupos) no reciben secretos ni permiso para comentar
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Pedir el resumen a la IA
+        env:
+          # el token vive en un secreto del repositorio, nunca en el código
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -uo pipefail
+          fallo() { echo "::warning::$1"; echo "La IA ha fallado" > resumen.md; exit 0; }
+
+          [ -n "$OLLAMA_API_KEY" ] || fallo "No está definido el secreto OLLAMA_API_KEY"
+
+          # el diff se recorta para no superar el contexto del modelo
+          git diff --stat "$BASE_SHA" "$HEAD_SHA" > cambios.txt
+          # sin tubería: si head cortara la salida de git diff, pipefail haría fallar el paso
+          git diff "$BASE_SHA" "$HEAD_SHA" > diff-completo.txt
+          head -c 60000 diff-completo.txt >> cambios.txt
+
+          jq -n --arg model "$OLLAMA_MODEL" --rawfile diff cambios.txt '{
+            model: $model,
+            stream: false,
+            messages: [
+              { role: "system",
+                content: "Eres un revisor de código. Resume en español, en lenguaje natural y en menos de 200 palabras, qué cambia este pull request y por qué importa. Usa Markdown con una lista breve. No inventes nada que no esté en el diff." },
+              { role: "user", content: $diff }
+            ]
+          }' > peticion.json
+
+          curl -sS --fail --max-time 300 https://ollama.com/api/chat \
+            -H "Authorization: Bearer $OLLAMA_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @peticion.json -o respuesta.json \
+            || fallo "La llamada a Ollama Cloud ha fallado"
+
+          jq -er '.message.content | select(length > 0)' respuesta.json > texto.md \
+            || fallo "La respuesta de la IA no tiene contenido"
+
+          { echo "### Resumen de cambios generado por IA ($OLLAMA_MODEL)"; echo; cat texto.md; } > resumen.md
+
+      - name: Comentar en el PR
+        if: always() # aunque el paso anterior rompa, el PR recibe el aviso
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        # reutiliza el comentario anterior del bot para no llenar el PR de comentarios
+        run: |
+          [ -s resumen.md ] || echo "La IA ha fallado" > resumen.md
+          gh pr comment "$PR" --body-file resumen.md --edit-last --create-if-none
