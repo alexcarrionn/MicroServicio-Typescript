@@ -89,22 +89,22 @@ Antes de empezar cualquier tarea de cierto alcance, abre o busca una Issue. Al c
 
 * **Informe de bug** — para fallos de funcionamiento o regresiones.
 * **Petición de funcionalidad** — para nuevas características o mejoras.
-* **Nuevo algoritmo** — plantilla específica para implementar uno de los algoritmos pendientes.
+* **Nuevo algoritmo** — especifica comportamiento, entrada, complejidad y variante; su implementación también debe documentarse con la plantilla de [`docs/plantilla-algoritmo.md`](../docs/plantilla-algoritmo.md).
 * **Tarea técnica** — refactorizaciones, dependencias, CI/CD o Docker.
 * **Documentación** — errores o huecos en la documentación.
 
-Si vienes de otro equipo, **comenta en el issue antes de ponerte**, para que no lo cojan dos personas a la vez. Te lo asignamos y es tuyo.
+Si vienes de otro equipo, **comenta en el issue antes de ponerte** y espera a que te lo asignemos, para que no lo cojan dos personas a la vez. No empieces la implementación antes de la asignación.
 
 ### 4.2. Ramas de trabajo
 
-Crea ramas descriptivas a partir de `main`:
+Crea una rama descriptiva a partir de `main`, con el formato `<tipo>/<número-issue>-<slug>`:
 
-* `feat/nombre-funcionalidad` — p. ej. `feat/quicksort`
-* `fix/descripcion-del-bug`
-* `refactor/nombre-mejora`
-* `docs/nombre`
+* `feat/123-quicksort` — nueva funcionalidad o algoritmo.
+* `fix/124-error-validacion` — corrección de un bug.
+* `refactor/125-registro-algoritmos` — refactorización.
+* `docs/126-guia-algoritmos` — documentación.
 
-Si **no tienes permisos de escritura** en este repositorio (caso habitual si eres de otro grupo), haz un **fork** y abre el PR desde tu fork.
+Usa el número del issue que tienes asignado; el *slug* debe ser corto y descriptivo. Si no tienes permisos de escritura en este repositorio (caso habitual si eres de otro grupo), haz un **fork** y abre el PR desde tu fork.
 
 ### 4.3. Convención de commits
 
@@ -133,21 +133,21 @@ Respeta la separación de responsabilidades:
 
 ```
 src/
-├── algorithms/     # implementaciones puras, sin dependencias de HTTP
+├── algorithms/     # algoritmos sin dependencias de HTTP
 ├── benchmark/      # generación de entradas, ejecución y cálculo de la mediana
 └── api/            # rutas, validación y manejo de errores
 ```
 
 Reglas que no se negocian:
 
-* **Los algoritmos no conocen HTTP.** Un fichero de `algorithms/` no importa nada de `api/` ni de Fastify. Son funciones puras sobre datos.
+* **Los algoritmos no conocen HTTP.** Un fichero de `algorithms/` no importa nada de `api/` ni de Fastify; recibe datos mediante la interfaz común `Algorithm`.
 * **La validación de entrada vive en `api/schemas.ts`**, con Zod. Los algoritmos pueden dar por hecho que reciben datos válidos.
 * **Los errores se canalizan por el manejador centralizado** y siempre salen como JSON, nunca como una traza de excepción.
 * **TypeScript en modo `strict`.** Nada de `any`: si necesitas una vía de escape, usa `unknown` y estrecha el tipo.
 
 ### 5.2. El contrato de la API
 
-Este microservicio forma parte de un sistema con varios lenguajes y **todos comparten el mismo contrato**. Está documentado en [`CONTRACT.md`](CONTRACT.md) y **no se modifica por iniciativa de un PR**: cualquier cambio tiene que acordarse antes entre todos los grupos.
+Este microservicio forma parte de un sistema con varios lenguajes y **todos comparten el mismo contrato**. El contrato HTTP actual se describe en la sección [Uso de la API](../README.md#uso-de-la-api) y **no se modifica por iniciativa de un PR**: cualquier cambio tiene que acordarse antes entre todos los grupos.
 
 ```jsonc
 // POST /api/v1/benchmark
@@ -200,7 +200,7 @@ Es la contribución más habitual y la que piden la mayoría de nuestros issues.
 
 ### Paso 1 — Coge el issue
 
-Busca uno con la etiqueta `good first issue` o `help wanted`, comenta que lo coges y espera a que te lo asignen. El issue indica qué significa `size` para ese algoritmo y qué complejidad se espera.
+Busca uno con la etiqueta `good first issue` o `help wanted`, comenta que lo coges y espera a que te lo asignen. La plantilla del issue debe definir el comportamiento esperado, qué significa `size`, el tipo de entrada, la complejidad y la variante. Si falta algún dato necesario, acláralo en el issue antes de implementar.
 
 ### Paso 2 — Crea el fichero
 
@@ -221,7 +221,7 @@ export interface Algorithm<TInput = unknown> {
 
 `TInput` es el tipo de la entrada de tu algoritmo: `Int32Array` para los de ordenación, un número para Fibonacci, un par de matrices para la multiplicación, etc. Lo indicas al declararlo y no hace falta tocar `types.ts`.
 
-Ejemplo, tomando `mergesort.ts` como referencia:
+Ejemplo para un algoritmo de ordenación, tomando `mergesort.ts` como referencia:
 
 ```ts
 import type { Algorithm } from './types.js';
@@ -244,10 +244,10 @@ function sort(a: Int32Array, lo: number, hi: number): void {
 }
 ```
 
-Dos cosas importantes:
+Ten en cuenta:
 
-* **Usa el generador de entradas que ya existe** (`randomInt32Array`), no escribas uno nuevo. Si todos los algoritmos de ordenación no reciben el mismo tipo de entrada, los tiempos dejan de ser comparables.
-* **Ordena in situ sobre el `Int32Array`.** Crear arrays nuevos en cada partición mide el recolector de basura, no el algoritmo.
+* Para algoritmos de ordenación sobre enteros, **usa el generador común** (`randomInt32Array`) y ordena el `Int32Array` in situ para mantener comparables las mediciones. Estas reglas son específicas de esa familia: para otro algoritmo, respeta el tipo de entrada y el comportamiento definidos en su issue.
+* `generateInput(size)` se ejecuta fuera del cronómetro. Evita incluir la generación o preparación de datos dentro de `run` salvo que el issue indique que esa preparación forma parte del algoritmo.
 
 ### Paso 3 — Regístralo
 
@@ -266,14 +266,16 @@ Con eso el algoritmo queda disponible en `POST /api/v1/benchmark` y aparece auto
 
 ### Paso 4 — Escribe los tests
 
-Crea `tests/unit/<nombre>.test.ts`. Como mínimo:
+Crea `tests/unit/<nombre>.test.ts`. Cubre, como mínimo:
 
-* Array vacío.
-* Un solo elemento.
-* Ya ordenado.
-* Orden inverso.
-* Con elementos repetidos.
-* Un array aleatorio grande, comparando el resultado contra `Array.prototype.sort` como oráculo.
+* Los tamaños y casos límite relevantes para el algoritmo.
+* Los comportamientos y restricciones descritos en el issue.
+* La forma y el tamaño de las entradas generadas.
+* Un oráculo independiente o propiedades del resultado cuando sea posible.
+
+Por ejemplo, para una ordenación conviene probar entradas vacías y unitarias,
+ordenadas e inversas, repetidos y comparar un caso aleatorio grande con
+`Array.prototype.sort`.
 
 ```bash
 npm test
@@ -289,11 +291,11 @@ curl -X POST http://localhost:3000/api/v1/benchmark \
   -d '{"algorithm":"quicksort","size":100000}'
 ```
 
-Comprueba que `timeMs` tiene un valor razonable y que crece como esperas al aumentar `size`. Si un algoritmo `O(n log n)` tarda lo mismo con 1.000 que con 1.000.000 de elementos, algo no se está ejecutando.
+Comprueba que `timeMs` tiene un valor razonable y que su crecimiento es coherente con la complejidad indicada en el issue. Compara dos o tres tamaños crecientes; no uses un tiempo concreto como criterio porque depende del entorno.
 
 ### Paso 6 — Abre el PR
 
-Sigue la sección 7. En las notas para quien revise, incluye la salida del `curl` con dos o tres tamaños distintos: nos ahorra tener que reproducirlo.
+Antes de abrir el PR, crea `docs/<nombre>.md` copiando [`docs/plantilla-algoritmo.md`](../docs/plantilla-algoritmo.md). Documenta el comportamiento, el significado de `size`, la variante implementada, el análisis de complejidad, las decisiones relevantes y cómo ejecutar el benchmark. Sigue la sección 7 y pega en el PR la salida del `curl` con dos o tres tamaños distintos: nos ahorra tener que reproducirlo.
 
 ---
 
@@ -305,6 +307,7 @@ Completa todos los campos de la plantilla (`.github/PULL_REQUEST_TEMPLATE.md`):
 
 * **Enlace a la Issue** correspondiente (`Closes #123`).
 * **Resumen del cambio.**
+* **Documentación de cada algoritmo nuevo** en `docs/<nombre>.md`, basada en `docs/plantilla-algoritmo.md`.
 * **Cómo lo has probado**: tests nuevos o actualizados, y comprobación manual con `curl`.
 * **Declaración de uso de IA**, si la ha habido.
 * **Notas para quien revise**: decisiones discutibles, alternativas descartadas, dudas.
@@ -325,6 +328,7 @@ Un PR se fusiona cuando se cumple **todo** esto:
 | El código cumple el estilo | `npm run lint` y `npm run format:check` |
 | La batería de tests pasa | `npm test` |
 | Hay tests que cubren el cambio | Revisión manual |
+| Cada algoritmo nuevo está documentado con la plantilla | `docs/<nombre>.md` y la salida del benchmark en el PR |
 | Al menos una aprobación de un *code owner* | Revisión en GitHub |
 | No quedan conversaciones sin resolver | Revisión en GitHub |
 | La rama está actualizada respecto a `main` | GitHub lo exige antes de fusionar |

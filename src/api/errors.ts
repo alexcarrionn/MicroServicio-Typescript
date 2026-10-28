@@ -1,5 +1,6 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
+import { httpStatusName } from "./http-status.js";
 
 /** Cuerpo de todas las respuestas de error de la API. */
 export interface ErrorResponse {
@@ -18,9 +19,10 @@ export function errorHandler(
   reply: FastifyReply,
 ): FastifyReply {
   if (error instanceof ZodError) {
+    const statusName = httpStatusName(400);
     return reply.status(400).send({
-      error: "Bad Request",
-      message: "La petición no es válida",
+      error: statusName,
+      message: statusName,
       details: error.issues.map((issue) => ({
         path: issue.path.join("."),
         message: issue.message,
@@ -31,14 +33,16 @@ export function errorHandler(
   const statusCode = error.statusCode ?? 500;
   if (statusCode >= 500) {
     request.log.error(error);
+    const statusName = httpStatusName(500);
     return reply.status(500).send({
-      error: "Internal Server Error",
-      message: "Error interno del servidor",
+      error: statusName,
+      message: statusName,
     } satisfies ErrorResponse);
   }
 
+  const statusName = httpStatusName(statusCode);
   return reply.status(statusCode).send({
-    error: error.code ?? "Error",
-    message: error.message,
+    error: statusName,
+    message: statusName,
   } satisfies ErrorResponse);
 }
