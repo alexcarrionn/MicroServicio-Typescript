@@ -1,6 +1,6 @@
 name: Resumen con IA
 
-# En cada pull request, una IA de Ollama Cloud resume en lenguaje natural
+# En cada pull request, una IA de GitHub Models resume en lenguaje natural
 # qué cambia y lo publica como comentario en el PR.
 on:
   pull_request:
@@ -13,9 +13,10 @@ concurrency:
 permissions:
   contents: read
   pull-requests: write # para comentar en el PR
+  models: read # para llamar a GitHub Models con el GITHUB_TOKEN
 
 env:
-  OLLAMA_MODEL: gpt-oss:120b
+  AI_MODEL: openai/gpt-4o-mini
 
 jobs:
   resumen:
@@ -30,15 +31,13 @@ jobs:
 
       - name: Pedir el resumen a la IA
         env:
-          # el token vive en un secreto del repositorio, nunca en el código
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          # GitHub Models usa el token del propio workflow, sin secretos extra
+          GH_TOKEN: ${{ github.token }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -uo pipefail
           fallo() { echo "::warning::$1"; echo "La IA ha fallado" > resumen.md; exit 0; }
-
-          [ -n "$OLLAMA_API_KEY" ] || fallo "No está definido el secreto OLLAMA_API_KEY"
 
           # el diff se recorta para no superar el contexto del modelo
           git diff --stat "$BASE_SHA" "$HEAD_SHA" > cambios.txt
@@ -46,9 +45,8 @@ jobs:
           git diff "$BASE_SHA" "$HEAD_SHA" > diff-completo.txt
           head -c 60000 diff-completo.txt >> cambios.txt
 
-          jq -n --arg model "$OLLAMA_MODEL" --rawfile diff cambios.txt '{
+          jq -n --arg model "$AI_MODEL" --rawfile diff cambios.txt '{
             model: $model,
-            stream: false,
             messages: [
               { role: "system",
                 content: "Eres un revisor de código. Resume en español, en lenguaje natural y en menos de 200 palabras, qué cambia este pull request y por qué importa. Usa Markdown con una lista breve. No inventes nada que no esté en el diff." },
@@ -56,16 +54,16 @@ jobs:
             ]
           }' > peticion.json
 
-          curl -sS --fail --max-time 300 https://ollama.com/api/chat \
-            -H "Authorization: Bearer $OLLAMA_API_KEY" \
+          curl -sS --fail --max-time 300 https://models.github.ai/inference/chat/completions \
+            -H "Authorization: Bearer $GH_TOKEN" \
             -H "Content-Type: application/json" \
             -d @peticion.json -o respuesta.json \
-            || fallo "La llamada a Ollama Cloud ha fallado"
+            || fallo "La llamada a GitHub Models ha fallado"
 
-          jq -er '.message.content | select(length > 0)' respuesta.json > texto.md \
+          jq -er '.choices[0].message.content | select(length > 0)' respuesta.json > texto.md \
             || fallo "La respuesta de la IA no tiene contenido"
 
-          { echo "### Resumen de cambios generado por IA ($OLLAMA_MODEL)"; echo; cat texto.md; } > resumen.md
+          { echo "### Resumen de cambios generado por IA ($AI_MODEL)"; echo; cat texto.md; } > resumen.md
 
       - name: Comentar en el PR
         if: always() # aunque el paso anterior rompa, el PR recibe el aviso

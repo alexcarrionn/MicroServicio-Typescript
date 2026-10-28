@@ -132,7 +132,7 @@ Los workflows están en `.github/workflows/`:
 | `ci.yml`      | Push a `main` y cada PR | `lint` (Prettier y ESLint) → `test` (tests con cobertura) → `build` (compila y sube `dist/` como artefacto) |
 | `release.yml` | Push a `main` y tags `v*.*.*` | Construye la imagen Docker y la publica en GHCR con las etiquetas de la tabla anterior |
 | `pages.yml`   | Push a `main` o a mano | Genera la documentación y la publica en GitHub Pages |
-| `ai-summary.yml` | Cada PR abierto desde una rama del repo | Pide a una IA (Ollama Cloud) un resumen del cambio y lo publica como comentario en el PR. Necesita el secreto `OLLAMA_API_KEY` |
+| `ai-summary.yml` | Cada PR abierto desde una rama del repo | Pide a una IA (GitHub Models) un resumen del cambio y lo publica como comentario en el PR |
 
 Un PR solo se puede fusionar si los tres jobs de `ci.yml` están en verde.
 
