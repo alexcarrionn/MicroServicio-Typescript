@@ -1,5 +1,6 @@
 # MicroServicio-Typescript
 
+[![CI](https://github.com/alexcarrionn/MicroServicio-Typescript/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/alexcarrionn/MicroServicio-Typescript/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/alexcarrionn/MicroServicio-Typescript/graph/badge.svg)](https://codecov.io/gh/alexcarrionn/MicroServicio-Typescript)
 
 Microservicio REST en **TypeScript** (Node.js 22, Fastify, Zod) que mide el tiempo de ejecución de algoritmos. Forma parte del proyecto global de comparación de rendimiento de algoritmos de la asignatura **Prácticas Continuas** del Máster en Ingeniería del Software de la Universidad de Murcia: cada grupo implementa la misma API en un lenguaje distinto y un frontend común las consulta para comparar los tiempos.
