@@ -127,7 +127,7 @@ jobs:
           [ "$uid" != "0" ] || { echo "::error::El contenedor se ejecuta como root"; exit 1; }
 
       - name: Prueba de humo de la API
-        run: sh scripts/smoke-test.sh http://localhost:3000
+        run: sh scripts/comprobar-api.sh http://localhost:3000
 
       - name: Logs del contenedor
         if: failure()
