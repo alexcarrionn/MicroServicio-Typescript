@@ -80,3 +80,59 @@ jobs:
           name: app-dist
           path: dist/
           retention-days: 7
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      IMAGE: microservicio-typescript:ci
+      CONTAINER: api-ci
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # misma imagen que publica release.yml, pero solo se carga en el runner
+      - name: Construir la imagen
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          push: false
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Arrancar el contenedor
+        run: docker run -d --name "$CONTAINER" -p 3000:3000 "$IMAGE"
+
+      # el HEALTHCHECK del Dockerfile decide cuándo está listo el servicio
+      - name: Esperar a que el contenedor esté healthy
+        run: |
+          for i in $(seq 1 45); do
+            estado=$(docker inspect -f '{{.State.Health.Status}}' "$CONTAINER")
+            echo "Intento $i: $estado"
+            [ "$estado" = "healthy" ] && exit 0
+            [ "$(docker inspect -f '{{.State.Running}}' "$CONTAINER")" = "true" ] || break
+            sleep 2
+          done
+          echo "::error::El contenedor no ha llegado a healthy"
+          exit 1
+
+      - name: Comprobar que no se ejecuta como root
+        run: |
+          uid=$(docker exec "$CONTAINER" id -u)
+          echo "UID dentro del contenedor: $uid"
+          [ "$uid" != "0" ] || { echo "::error::El contenedor se ejecuta como root"; exit 1; }
+
+      - name: Prueba de humo de la API
+        run: sh scripts/comprobar-api.sh http://localhost:3000
+
+      - name: Logs del contenedor
+        if: failure()
+        run: docker logs "$CONTAINER"
+
+      - name: Parar el contenedor
+        if: always()
+        run: docker rm -f "$CONTAINER" || true

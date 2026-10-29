@@ -18,6 +18,7 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:api": "sh scripts/comprobar-api.sh",
     "docs": "typedoc"
   },
   "repository": {
