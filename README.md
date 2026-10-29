@@ -107,6 +107,7 @@ El contrato es común a todos los lenguajes del proyecto y no se cambia sin acor
 ```bash
 npm test                # unitarios e integración
 npm run test:coverage   # con informe de cobertura en coverage/
+npm run test:api        # prueba de humo contra la API en marcha (necesita curl y jq)
 npm run lint            # ESLint
 npm run format:check    # Prettier, sin modificar ficheros
 ```
@@ -121,6 +122,15 @@ docker compose ps
 ```
 
 La API se publica en `http://localhost:3000`. Para pararla, `docker compose down`.
+
+### Comprobar la imagen
+
+Con el contenedor en marcha, la prueba de humo recorre los endpoints y comprueba que cumplen el contrato (`/health`, la lista de algoritmos, un benchmark válido y los `400` con entradas incorrectas):
+
+```bash
+npm run test:api                                     # contra http://localhost:3000
+sh scripts/comprobar-api.sh http://otra-maquina:3000 # contra otra URL
+```
 
 
 ## CI/CD
