@@ -132,6 +132,8 @@ npm run test:api                                     # contra http://localhost:3
 sh scripts/comprobar-api.sh http://otra-maquina:3000 # contra otra URL
 ```
 
+Es la misma comprobación que ejecuta el job `docker` de la CI.
+
 
 ## CI/CD
 
@@ -139,12 +141,12 @@ Los workflows están en `.github/workflows/`:
 
 | Workflow | Cuándo se ejecuta | Qué hace |
 |----------|-------------------|----------|
-| `ci.yml`      | Push a `main` y cada PR | `lint` (Prettier y ESLint) → `test` (tests con cobertura) → `build` (compila y sube `dist/` como artefacto) |
+| `ci.yml`      | Push a `main` y cada PR | `lint` (Prettier y ESLint) → `test` (tests con cobertura) → `build` (compila y sube `dist/` como artefacto) → `docker` (construye la imagen, espera a que esté *healthy*, comprueba que no corre como root y lanza la comprobación de la API) |
 | `release.yml` | Push a `main` y tags `v*.*.*` | Construye la imagen Docker y la publica en GHCR con las etiquetas de la tabla anterior |
 | `pages.yml`   | Push a `main` o a mano | Genera la documentación y la publica en GitHub Pages |
 | `ai-summary.yml` | Cada PR abierto desde una rama del repo | Pide a una IA (Groq) un resumen del cambio y lo publica como comentario en el PR. Necesita el secreto `GROQ_API_KEY` |
 
-Un PR solo se puede fusionar si los tres jobs de `ci.yml` están en verde.
+Un PR solo se puede fusionar si los jobs de `ci.yml` están en verde.
 
 ### Publicar una versión
 
