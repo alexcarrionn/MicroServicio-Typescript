@@ -2,8 +2,15 @@ name: Resumen con IA
 
 # En cada pull request, una IA de Groq resume en lenguaje natural
 # qué cambia y lo publica como comentario en el PR.
+#
+# Usa pull_request_target para que también funcione con PRs desde forks:
+# se ejecuta el workflow de la rama base, con secretos y permiso para comentar.
+# AVISO DE SEGURIDAD: este workflow NUNCA debe ejecutar código del PR
+# (nada de npm ci, builds, tests ni scripts del fork) ni interpolar datos
+# del PR (título, cuerpo, nombre de rama) con ${{ }} dentro de un run:.
+# El código del PR solo se lee con git diff y se envía como texto a la IA.
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
 
 concurrency:
@@ -19,14 +26,20 @@ env:
 
 jobs:
   resumen:
-    # los PRs desde forks (otros grupos) no reciben secretos ni permiso para comentar
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # se hace checkout de la rama base (por defecto en pull_request_target)
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
+
+      # trae los commits del PR (también si vienen de un fork) solo para el diff
+      - name: Traer los commits del PR
+        env:
+          PR: ${{ github.event.pull_request.number }}
+        run: git fetch --no-tags origin "pull/$PR/head"
 
       - name: Pedir el resumen a la IA
         env:
