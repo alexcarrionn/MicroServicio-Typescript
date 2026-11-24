@@ -44,6 +44,7 @@ describe("GET /api/v1/algorithms", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.algorithms).toContain("mergesort");
+    expect(response.body.algorithms).toContain("fibonacci");
   });
 });
 
@@ -63,6 +64,42 @@ describe("POST /api/v1/benchmark", () => {
     });
     expect(response.body.timeMs).toBeGreaterThanOrEqual(0);
   });
+
+  it.each([1, 100])(
+    "mide fibonacci con size %i sin cambiar el contrato",
+    async (size) => {
+      const response = await request(app.server)
+        .post("/api/v1/benchmark")
+        .send({ algorithm: "fibonacci", size });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        language: "typescript",
+        algorithm: "fibonacci",
+        size,
+        timeMs: expect.any(Number),
+        runs: 5,
+      });
+      expect(Number.isFinite(response.body.timeMs)).toBe(true);
+      expect(response.body.timeMs).toBeGreaterThanOrEqual(0);
+    },
+  );
+
+  it.each([0, -5, 1.5])(
+    "devuelve 400 para fibonacci con size %s",
+    async (size) => {
+      const response = await request(app.server)
+        .post("/api/v1/benchmark")
+        .send({ algorithm: "fibonacci", size });
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBe("Bad Request");
+      expect(response.body.message).toBe("Bad Request");
+      expect(response.body.details).toContainEqual(
+        expect.objectContaining({ path: "size" }),
+      );
+    },
+  );
 
   it.each([
     ["cero", 0],
